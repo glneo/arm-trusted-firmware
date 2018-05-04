@@ -1116,6 +1116,41 @@ int ti_sci_clock_get_freq(uint32_t dev_id, uint8_t clk_id, uint64_t *freq)
 }
 
 /**
+ * ti_sci_core_reboot() - Command to request system reset
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_core_reboot(void)
+{
+	struct ti_sci_msg_req_reboot req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TI_SCI_MSG_SYS_RESET,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
  * ti_sci_init() - Basic initialization
  *
  * Return: 0 if all goes good, else appropriate error message.
