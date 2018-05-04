@@ -1151,6 +1151,307 @@ int ti_sci_core_reboot(void)
 }
 
 /**
+ * ti_sci_proc_request() - Command to request a physical processor control
+ *
+ * @proc_id:	Processor ID this request is for
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_request(uint8_t proc_id)
+{
+	struct ti_sci_msg_req_proc_request req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_PROC_REQUEST,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_release() - Command to release a physical processor control
+ *
+ * @proc_id:	Processor ID this request is for
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_release(uint8_t proc_id)
+{
+	struct ti_sci_msg_req_proc_release req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_PROC_RELEASE,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_handover() - Command to handover a physical processor
+ *				control to a host in the processor's access
+ *				control list.
+ *
+ * @proc_id:	Processor ID this request is for
+ * @host_id:	Host ID to get the control of the processor
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_handover(uint8_t proc_id, uint8_t host_id)
+{
+	struct ti_sci_msg_req_proc_handover req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_PROC_HANDOVER,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+	req.host_id = host_id;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_set_boot_cfg() - Command to set the processor boot
+ *				    configuration flags
+ *
+ * @proc_id:		Processor ID this request is for
+ * @config_flags_set:	Configuration flags to be set
+ * @config_flags_clear:	Configuration flags to be cleared.
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_set_boot_cfg(uint8_t proc_id, uint64_t bootvector,
+			     uint32_t config_flags_set,
+			     uint32_t config_flags_clear)
+{
+	struct ti_sci_msg_req_set_proc_boot_config req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_SET_PROC_BOOT_CONFIG,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+	req.bootvector_low = bootvector & TISCI_ADDR_LOW_MASK;
+	req.bootvector_high = (bootvector & TISCI_ADDR_HIGH_MASK) >>
+				TISCI_ADDR_HIGH_SHIFT;
+	req.config_flags_set = config_flags_set;
+	req.config_flags_clear = config_flags_clear;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_set_boot_ctrl() - Command to set the processor boot
+ *				     control flags
+ *
+ * @proc_id:			Processor ID this request is for
+ * @control_flags_set:		Control flags to be set
+ * @control_flags_clear:	Control flags to be cleared
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_set_boot_ctrl(uint8_t proc_id, uint32_t control_flags_set,
+			      uint32_t control_flags_clear)
+{
+	struct ti_sci_msg_req_set_proc_boot_ctrl req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_SET_PROC_BOOT_CTRL,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+	req.control_flags_set = control_flags_set;
+	req.control_flags_clear = control_flags_clear;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_auth_boot_image() - Command to authenticate and load the
+ *			image and then set the processor configuration flags.
+ *
+ * @proc_id:	Processor ID this request is for
+ * @cert_addr:	Memory address at which payload image certificate is located.
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_auth_boot_image(uint8_t proc_id, uint64_t cert_addr)
+{
+	struct ti_sci_msg_req_proc_auth_boot_image req;
+	struct ti_sci_msg_hdr *resp;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_PROC_AUTH_BOOT_IMIAGE,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+	req.cert_addr_low = cert_addr & TISCI_ADDR_LOW_MASK;
+	req.cert_addr_high = (cert_addr & TISCI_ADDR_HIGH_MASK) >>
+				TISCI_ADDR_HIGH_SHIFT;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_hdr *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	return 0;
+}
+
+/**
+ * ti_sci_proc_get_boot_status() - Command to get the processor boot status
+ *
+ * @proc_id:	Processor ID this request is for
+ *
+ * Return: 0 if all went well, else returns appropriate error value.
+ */
+int ti_sci_proc_get_boot_status(uint8_t proc_id, uint64_t *bv,
+				uint32_t *cfg_flags,
+				uint32_t *ctrl_flags,
+				uint32_t *sts_flags)
+{
+	struct ti_sci_msg_resp_get_proc_boot_status *resp;
+	struct ti_sci_msg_req_get_proc_boot_status req;
+
+	struct ti_sci_xfer xfer;
+	int ret;
+
+	ret = ti_sci_setup_one_xfer(TISCI_MSG_GET_PROC_BOOT_STATUS,
+				    TI_SCI_FLAG_REQ_ACK_ON_PROCESSED,
+				    (uint32_t *)&req, sizeof(req),
+				    sizeof(*resp), &xfer);
+	if (ret) {
+		ERROR("Message alloc failed (%d)\n", ret);
+		return ret;
+	}
+	req.processor_id = proc_id;
+
+	ret = ti_sci_do_xfer(&xfer);
+	if (ret) {
+		ERROR("Transfer send failed (%d)\n", ret);
+		return ret;
+	}
+
+	resp = (struct ti_sci_msg_resp_get_proc_boot_status *)xfer.tx_message.buf;
+	if (!ti_sci_is_response_ack(resp))
+		return -ENODEV;
+
+	*bv = (resp->bootvector_low & TISCI_ADDR_LOW_MASK) |
+	      (((uint64_t)resp->bootvector_high << TISCI_ADDR_HIGH_SHIFT) &
+	       TISCI_ADDR_HIGH_MASK);
+	*cfg_flags = resp->config_flags;
+	*ctrl_flags = resp->control_flags;
+	*sts_flags = resp->status_flags;
+
+	return 0;
+}
+
+/**
  * ti_sci_init() - Basic initialization
  *
  * Return: 0 if all goes good, else appropriate error message.
