@@ -30,4 +30,7 @@
 #define PLAT_MAX_OFF_STATE		2
 #define PLAT_MAX_RET_STATE		1
 
+#define PLAT_PROC_START_ID		32
+#define PLAT_PROC_DEVICE_START_ID	202
+
 #endif /* __BOARD_DEF_H__ */
