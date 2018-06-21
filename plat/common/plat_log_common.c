@@ -12,7 +12,7 @@
 #pragma weak plat_log_get_prefix
 
 static const char *prefix_str[] = {
-	"ERROR:   ", "NOTICE:  ", "WARNING: ", "INFO:    ", "VERBOSE: "};
+	"ATF CORE0: ", "ATF CORE1: ", "ATF CORE2: ", "ATF CORE3: "};
 
 const char *plat_log_get_prefix(unsigned int log_level)
 {
@@ -21,5 +21,5 @@ const char *plat_log_get_prefix(unsigned int log_level)
 	else if (log_level > LOG_LEVEL_VERBOSE)
 		log_level = LOG_LEVEL_VERBOSE;
 
-	return prefix_str[(log_level/10) - 1];
+	return prefix_str[plat_my_core_pos()];
 }
