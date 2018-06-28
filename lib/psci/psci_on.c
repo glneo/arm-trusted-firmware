@@ -117,6 +117,11 @@ int psci_cpu_on_start(u_register_t target_cpu,
 	/*
 	 * Perform generic, architecture and platform specific handling.
 	 */
+
+	INFO("From starting core, lock[%d] at %p value: %d\n", target_idx, &psci_cpu_pd_nodes[target_idx].cpu_lock, psci_cpu_pd_nodes[target_idx].cpu_lock.lock);
+
+//	flush_dcache_range((uintptr_t)&psci_cpu_pd_nodes[target_idx].cpu_lock, sizeof(&psci_cpu_pd_nodes[target_idx].cpu_lock));
+
 	/*
 	 * Plat. management: Give the platform the current state
 	 * of the target cpu to allow it to perform the necessary
@@ -124,6 +129,13 @@ int psci_cpu_on_start(u_register_t target_cpu,
 	 */
 	rc = psci_plat_pm_ops->pwr_domain_on(target_cpu);
 	assert(rc == PSCI_E_SUCCESS || rc == PSCI_E_INTERN_FAIL);
+
+
+	/* delay after starting remote core so it can print lock value before we release it */
+	volatile int x = 0x100000;
+	while (x--)
+		;
+
 
 	if (rc == PSCI_E_SUCCESS)
 		/* Store the re-entry information for the non-secure world. */
@@ -135,6 +147,9 @@ int psci_cpu_on_start(u_register_t target_cpu,
 	}
 
 exit:
+
+	INFO("Releasing lock[%d] current value: %d\n", target_idx, psci_cpu_pd_nodes[target_idx].cpu_lock.lock);
+
 	psci_spin_unlock_cpu(target_idx);
 	return rc;
 }
@@ -175,6 +190,8 @@ void psci_cpu_on_finish(unsigned int cpu_idx,
 	 * a synchronization point with cpu_on_start(), it can be released
 	 * immediately.
 	 */
+	INFO("Lock[%d] at %p value: %d\n", cpu_idx, &psci_cpu_pd_nodes[cpu_idx].cpu_lock.lock, psci_cpu_pd_nodes[cpu_idx].cpu_lock.lock);
+
 	psci_spin_lock_cpu(cpu_idx);
 	psci_spin_unlock_cpu(cpu_idx);
 
