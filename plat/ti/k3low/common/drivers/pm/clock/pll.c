@@ -83,24 +83,13 @@ static void pll_consider_entry(struct pll_consider_data *data,
 		 *
 		 * Note: We break up the calculation in order to avoid a div64.
 		 */
-		clkod_plld = (uint32_t) (entry->plld * entry->clkod);
+		clkod_plld = entry->plld * entry->clkod;
 
 		actual64 = ((uint64_t) (data->input / clkod_plld)) * entry->pllm;
-		rem64 = ((uint64_t) (data->input % clkod_plld)) * entry->pllm;
+		rem64 = (uint64_t)(data->input % clkod_plld) * entry->pllm;
 
-		if (rem64 > (uint64_t) ULONG_MAX) {
-			/*
-			 * Note: This is only true if clkod * plld * pllm >
-			 * ULONG_MAX. This is not true for any currently
-			 * supported PLLs, this 64 bit division is only
-			 * included for completeness
-			 */
-			actual64 += pm_div64(&rem64, clkod_plld);
-			rem = (uint32_t) rem64;
-		} else {
-			actual64 += (uint64_t) (((uint32_t) rem64) / clkod_plld);
-			rem = ((uint32_t) rem64) % clkod_plld;
-		}
+		actual64 += (uint32_t)rem64 / clkod_plld;
+		rem = (uint32_t)rem64 % clkod_plld;
 
 		if (entry->pllfm != 0UL) {
 			uint64_t fret;
@@ -119,40 +108,29 @@ static void pll_consider_entry(struct pll_consider_data *data,
 			}
 
 			/* Calculate fractional component of frequency */
-			fret = ((uint64_t) (data->input / clkod_plld)) * entry->pllfm;
-			frem = ((uint64_t) (data->input % clkod_plld)) * entry->pllfm;
-			if (frem > (uint64_t) ULONG_MAX) {
-				fret += pm_div64(&frem, clkod_plld);
-			} else if (frem >= clkod_plld) {
-				fret += (uint64_t) (((uint32_t) frem) / clkod_plld);
-				frem = frem % (uint64_t) clkod_plld;
-			} else {
-				/* Do Nothing */
+			fret = (uint64_t)(data->input / clkod_plld) * entry->pllfm;
+			frem = (uint64_t)(data->input % clkod_plld) * entry->pllfm;
+			if (frem >= clkod_plld) {
+				fret += (uint32_t)frem / clkod_plld;
+				frem = frem % clkod_plld;
 			}
 
 			fret *= stride;
 			frem *= stride;
-			if (frem > (uint64_t) ULONG_MAX) {
-				fret += pm_div64(&frem, clkod_plld);
-			} else if (frem >= clkod_plld) {
-				fret += (uint64_t) (((uint32_t) frem) / clkod_plld);
-				frem = (uint64_t) (((uint32_t) frem) % clkod_plld);
-			} else {
-				/* Do Nothing */
+			if (frem >= clkod_plld) {
+				fret += (uint32_t)frem / clkod_plld;
+				frem = (uint32_t)frem % clkod_plld;
 			}
 
-			frem += (uint64_t) (((uint32_t) (fret & pllfm_mask)) * clkod_plld);
+			frem += (uint32_t)(fret & pllfm_mask) * clkod_plld;
 
 			actual64 += fret >> pllfm_bits;
-			rem += (uint32_t) (frem >> pllfm_bits);
+			rem += (uint32_t)(frem >> pllfm_bits);
 
-			actual64 += (uint64_t) (((uint32_t) rem) / clkod_plld);
-			rem += ((uint32_t) rem) % clkod_plld;
+			actual64 += (uint32_t)rem / clkod_plld;
+			rem += (uint32_t)rem % clkod_plld;
 		}
 
-		if (actual64 > (uint64_t) ULONG_MAX) {
-			pll_consider_done = true;
-		}
 	}
 
 	if (!pll_consider_done) {
@@ -236,16 +214,11 @@ static enum consider_result pll_consider(struct pll_consider_data *data,
 		 * avoid a div64. We save the remainder so we can round the
 		 * result down and up.
 		 */
-		result64 = ((uint64_t) (data->input / rem_div)) * curr_pllm;
-		rem64 = ((uint64_t) (data->input % rem_div)) * curr_pllm;
+		result64 = (uint64_t)(data->input / rem_div) * curr_pllm;
+		rem64 = (uint64_t)(data->input % rem_div) * curr_pllm;
 
-		if (rem64 > (uint64_t) ULONG_MAX) {
-			result64 += pm_div64(&rem64, rem_div);
-			rem = (uint32_t) rem64;
-		} else {
-			result64 += (uint64_t) (((uint32_t) rem64) / rem_div);
-			rem = ((uint32_t) rem64) % rem_div;
-		}
+		result64 += (uint32_t)rem64 / rem_div;
+		rem = (uint32_t)rem64 % rem_div;
 
 		if (curr_pllfm != 0UL) {
 			uint64_t fret;
@@ -257,24 +230,16 @@ static enum consider_result pll_consider(struct pll_consider_data *data,
 			mask = (uint32_t) (1UL << bits) - 1U;
 
 			/* Calculate fractional part of frequency */
-			fret = ((uint64_t) (data->input / rem_div)) * curr_pllfm;
-			frem = ((uint64_t) (data->input % rem_div)) * curr_pllfm;
-			if (frem > (uint64_t) ULONG_MAX) {
-				fret += pm_div64(&frem, rem_div);
-			} else {
-				fret += ((uint32_t) frem) / rem_div;
-				frem = (uint64_t) (((uint32_t) frem) % rem_div);
-			}
+			fret = (uint64_t)(data->input / rem_div) * curr_pllfm;
+			frem = (uint64_t)(data->input % rem_div) * curr_pllfm;
+			fret += (uint64_t)((uint32_t)frem / rem_div);
+			frem = (uint32_t)frem % rem_div;
 
 			/* Fold in multiplier */
 			fret *= stride;
 			frem *= stride;
-			if (frem > (uint64_t) ULONG_MAX) {
-				fret += pm_div64(&frem, rem_div);
-			} else {
-				fret += (uint64_t) (((uint32_t) frem) / rem_div);
-				frem = (uint64_t) (((uint32_t) frem) % rem_div);
-			}
+			fret += (uint32_t)frem / rem_div;
+			frem = (uint32_t)frem % rem_div;
 
 			/* Fold fractional part back into remainder */
 			frem += (fret & (uint64_t) mask) * rem_div;
@@ -288,11 +253,7 @@ static enum consider_result pll_consider(struct pll_consider_data *data,
 		}
 
 		/* Make sure our result at least fits within 32-bits */
-		if (result64 > (uint64_t) ULONG_MAX) {
-			ret = PLLM_HIGH;
-		} else {
-			vco = (uint32_t) result64;
-		}
+		vco = (uint32_t) result64;
 	}
 
 	if (ret == PLLM_NO_VALUE) {
@@ -513,16 +474,12 @@ static inline void pll_consider_fractional(struct pll_consider_data *data,
 
 		test_pllm = curr_pllm + stride;
 
-		test_vco = ((uint64_t) (data->input / data->curr_plld)) * test_pllm;
-		test_vco_rem = ((uint64_t) (data->input % data->curr_plld)) * test_pllm;
-		if (test_vco_rem > (uint64_t) ULONG_MAX) {
-			test_vco += pm_div64(&test_vco_rem, test_pllm);
-		} else {
-			uint32_t extra = ((uint32_t) test_vco_rem) / test_pllm;
+		test_vco = (uint64_t)(data->input / data->curr_plld) * test_pllm;
+		test_vco_rem = (uint64_t)(data->input % data->curr_plld) * test_pllm;
+		uint32_t extra = (uint32_t)test_vco_rem / test_pllm;
 
-			test_vco += extra;
-			test_vco_rem -= (uint64_t) (extra * test_pllm);
-		}
+		test_vco += extra;
+		test_vco_rem -= (uint64_t)(extra * test_pllm);
 		if (test_vco > data->vco_max) {
 			highest_pllfm--;
 		} else if ((test_vco == data->vco->max_hz) && (test_vco_rem != 0UL)) {
@@ -542,7 +499,7 @@ static inline void pll_consider_fractional(struct pll_consider_data *data,
 	 *
 	 * pllm_rem * pllfm range = pllfm * input
 	 */
-	rem_target = (uint64_t) (((uint64_t) pllm_rem) * (1UL << data->data->pllfm_bits));
+	rem_target = ((uint64_t) pllm_rem) * (1ULL << data->data->pllfm_bits);
 
 	/* Start at the lowest and walk it up to the highest */
 	pllfm_input = ((uint64_t) lowest_pllfm) * data->input;
@@ -583,7 +540,7 @@ static inline void pll_consider_fractional(struct pll_consider_data *data,
 	}
 
 	if (found_best) {
-		pll_consider(data, curr_pllm, best_pllfm, stride);
+		(void)pll_consider(data, curr_pllm, best_pllfm, stride);
 	}
 }
 
@@ -1034,21 +991,6 @@ static inline void pll_internal_calc(struct pll_consider_data *consider_data)
 		ideal_pllm_rem *= (uint64_t) (lowest_plld - 1UL);
 
 		/* Handle the carry */
-		while (ideal_pllm_rem > (uint64_t) ULONG_MAX) {
-			/*
-			 * Note: lowest_plld will only be > 1 if:
-			 *
-			 * (input - 1) > vco_in->max_hz
-			 *
-			 * This cannot hold true for any currently
-			 * supported PLLs. This loop to handle
-			 * ideal_plld_rem values > ULONG_MAX is
-			 * only here for completeness as it will
-			 * execute at max lowest_plld - 1 times.
-			 */
-			ideal_pllm++;
-			ideal_pllm_rem -= consider_data->input;
-		}
 		extra = ((uint32_t) ideal_pllm_rem) / consider_data->input;
 		ideal_pllm += extra;
 		ideal_pllm_rem -= ((uint64_t) extra) * consider_data->input;
@@ -1134,8 +1076,7 @@ static inline void pll_internal_calc(struct pll_consider_data *consider_data)
 					 * Adjust the remainder according to our
 					 * position within the stride.
 					 */
-					frem += (uint64_t) ((ideal_pllm - low_pllm) *
-							    consider_data->input);
+					frem += (ideal_pllm - low_pllm) * consider_data->input;
 					frem /= stride;
 				}
 				estimate_pllfm = (uint32_t) ((frem * input_inverse64) >> 32U);
@@ -1225,8 +1166,8 @@ static inline void pll_internal_calc(struct pll_consider_data *consider_data)
 
 uint32_t pll_calc(struct clk *clkp, const struct pll_data *data,
 		  uint32_t input, uint32_t output, uint32_t min, uint32_t max,
-		  uint32_t *plld, uint32_t *pllm, uint32_t *pllfm,
-		  uint32_t *clkod)
+		  uint32_t * const plld, uint32_t * const pllm, uint32_t * const pllfm,
+		  uint32_t * const clkod)
 {
 	uint32_t ret = 0U;
 
