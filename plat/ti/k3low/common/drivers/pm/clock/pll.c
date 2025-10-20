@@ -7,7 +7,6 @@
 #include <clk_pll.h>
 #include <limits.h>
 #include <lib/container_of.h>
-#include <mul.h>
 #include <types/errno.h>
 
 struct pll_consider_data {
@@ -916,28 +915,12 @@ static inline void pll_internal_calc(struct pll_consider_data *consider_data)
 		 * generated limit to be sure it fits within the legal
 		 * VCO limits and the allowable output frequency.
 		 */
-		if (mul32_check_overflow(clkod, consider_data->min,
-					 &consider_data->vco_min)) {
-			consider_data->vco_min = (uint32_t) ULONG_MAX;
-		}
-		if (consider_data->vco_min < consider_data->vco->min_hz) {
-			consider_data->vco_min = consider_data->vco->min_hz;
-		}
+		consider_data->vco_min = CLAMP((uint64_t)consider_data->vco->min_hz,
+					       (uint64_t)clkod * consider_data->min,
+					       (uint64_t)UINT32_MAX);
 
-		if (mul32_check_overflow(clkod, consider_data->max,
-					 &consider_data->vco_max)) {
-			consider_data->vco_max = (uint32_t) ULONG_MAX;
-		} else {
-			/* vco_max = clkod * (max + 1U) - 1U */
-			consider_data->vco_max += clkod - 1U;
-			if (consider_data->vco_max < (clkod - 1UL)) {
-				/* Overflow occurred */
-				consider_data->vco_max = (uint32_t) ULONG_MAX;
-			}
-		}
-		if (consider_data->vco_max > consider_data->vco->max_hz) {
-			consider_data->vco_max = consider_data->vco->max_hz;
-		}
+		uint64_t vco_max = (uint64_t)clkod * (consider_data->max + 1) - 1U;
+		consider_data->vco_max = MIN(vco_max, (uint64_t)consider_data->vco->max_hz);
 
 		if (data->clkod_valid && !data->clkod_valid(clkp, clkod)) {
 			continue;
@@ -956,22 +939,9 @@ static inline void pll_internal_calc(struct pll_consider_data *consider_data)
 		 * then add output each time we increment clkod. We start with
 		 * the lowest_clkod - 1 to make the continue logic a bit easier.
 		 */
-		if (mul32_check_overflow(consider_data->output, clkod,
-					 &vco_target)) {
-			vco_target = (uint32_t) ULONG_MAX;
-		}
-
-		/*
-		 * Clip our desired VCO frequency to the range of
-		 * allowable VCO frequencies.
-		 */
-		if (vco_target < consider_data->vco->min_hz) {
-			vco_target = consider_data->vco->min_hz;
-		} else if (vco_target > consider_data->vco->max_hz) {
-			vco_target = consider_data->vco->max_hz;
-		} else {
-			/* Do Nothing */
-		}
+		vco_target = CLAMP((uint64_t)consider_data->vco->min_hz,
+				   (uint64_t)consider_data->output * clkod,
+				   (uint64_t)consider_data->vco->max_hz);
 
 		/*
 		 * How much to add to out ideal_pllm value and remainder
