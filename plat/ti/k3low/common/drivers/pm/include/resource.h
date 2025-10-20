@@ -54,40 +54,7 @@ struct resource_mem {
 				(uint8_t) (((uint32_t) (mem) >> 16) & 0xffU),\
 				(uint8_t) ((uint32_t) (mem) >> 24)
 
-/*
- * The stucts these return are not aligned and packed. They return NULL if
- * no such resource is present, never resources with the RESOURCE_xxx_NONE
- * value.
- */
-
 struct device;
-
-/**
- * \brief Return a memory device resource.
- *
- * \param dev
- * Which device the resource table is attached to.
- *
- * \param idx
- * There can be multiple resources of each type. This indicates which one
- * to return.
- *
- * \return
- * The desired memory resource, or NULL if the device has no such resource.
- * Device resources are packed data and the alignment of the returned data
- * will not be natural.
- */
-const struct resource_mem *device_resource_mem(struct device *dev, uint8_t idx);
-
-static inline uint32_t mem_readl(const struct resource_mem *mem, uint32_t off)
-{
-	return readl(mem->addr + off);
-}
-
-static inline void mem_writel(const struct resource_mem *mem, uint32_t a,
-				     uint32_t off)
-{
-	writel(a, mem->addr + off);
-}
+const void *resource_get(struct device *dev, uint8_t type, uint8_t idx);
 
 #endif

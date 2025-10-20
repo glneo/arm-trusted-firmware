@@ -114,23 +114,22 @@ static void lpsc_module_put_internal(struct device *dev,
 
 static uint32_t psc_read(struct device *dev, uint32_t reg)
 {
-	const struct resource_mem *mem = device_resource_mem(dev, 0U);
-	uint32_t ret = 0U;
+	const struct resource_mem *mem = (const struct resource_mem *) resource_get(dev, RESOURCE_MEM, 0U);
 
-	if (mem != NULL) {
-		ret = mem_readl(mem, reg);
-	}
+	if (mem == NULL || mem->addr == RESOURCE_MEM_NONE)
+		return 0U;
 
-	return ret;
+	return mmio_read_32(mem->addr + reg);
 }
 
 static void psc_write(struct device *dev, uint32_t val, uint32_t reg)
 {
-	const struct resource_mem *mem = device_resource_mem(dev, 0U);
+	const struct resource_mem *mem = (const struct resource_mem *) resource_get(dev, RESOURCE_MEM, 0U);
 
-	if (mem != NULL) {
-		mem_writel(mem, val, reg);
-	}
+	if (mem == NULL || mem->addr == RESOURCE_MEM_NONE)
+		return;
+
+	mmio_write_32(mem->addr + reg, val);
 }
 
 pd_idx_t psc_pd_idx(struct device *dev, const struct psc_pd *pd)
@@ -1351,8 +1350,8 @@ static int32_t psc_pre_init(struct device *dev)
 	if (psc_lookup((psc_idx_t) psc->psc_idx) == NULL) {
 		const struct resource_mem *mem;
 
-		mem = device_resource_mem(dev, 0);
-		if (!mem) {
+		mem = (const struct resource_mem *) resource_get(dev, RESOURCE_MEM, 0U);
+		if (mem == NULL || mem->addr == RESOURCE_MEM_NONE) {
 			ret = -EINVAL;
 		}
 

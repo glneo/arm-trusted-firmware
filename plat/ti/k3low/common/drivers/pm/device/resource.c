@@ -27,7 +27,7 @@
  * \return
  * The desired resource entry, or NULL if no such entry exists.
  */
-static const void *resource_get(struct device *dev, uint8_t type, uint8_t idx)
+const void *resource_get(struct device *dev, uint8_t type, uint8_t idx)
 {
 	/*
 	 * The downshift here is just because the macro that defines the type
@@ -74,12 +74,4 @@ static const void *resource_get(struct device *dev, uint8_t type, uint8_t idx)
 	}
 
 	return r;
-}
-
-const struct resource_mem *device_resource_mem(struct device *dev, uint8_t idx)
-{
-	const struct resource_mem *ret =
-		(const struct resource_mem *) resource_get(dev, RESOURCE_MEM, idx);
-
-	return (ret && (ret->addr != RESOURCE_MEM_NONE)) ? ret : NULL;
 }
