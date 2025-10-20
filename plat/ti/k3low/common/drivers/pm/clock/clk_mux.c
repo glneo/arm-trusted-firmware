@@ -6,7 +6,6 @@
 
 #include <clk_mux.h>
 #include <lib/container_of.h>
-#include <ilog.h>
 #include <lib/io.h>
 #include <lib/trace.h>
 
@@ -16,9 +15,7 @@ static uint32_t clk_mux_get_parent_value(struct clk *clkp)
 	const struct clk_data_mux *mux;
 	const struct clk_data_mux_reg *reg;
 	uint32_t v;
-	uint32_t mask;
 	uint32_t n_minus_one;
-	uint32_t shift_bits;
 
 	mux = container_of(clk_datap->data, const struct clk_data_mux, data);
 	reg = container_of(mux, const struct clk_data_mux_reg, data_mux);
@@ -31,12 +28,10 @@ static uint32_t clk_mux_get_parent_value(struct clk *clkp)
 		v = 0U;
 	} else {
 		v = readl(reg->reg);
-		v >>= (uint32_t)reg->bit;
+		v >>= (uint32_t) reg->bit;
 
 		n_minus_one = mux->n - 1U;
-		shift_bits = (uint32_t)ilog32(n_minus_one);
-		mask = ((1U << shift_bits) - 1U);
-		v &= mask;
+		v &= MASK_COVER_FOR_NUMBER(n_minus_one);
 	}
 
 	return v;
@@ -71,7 +66,6 @@ static bool clk_mux_set_parent(struct clk *clkp, uint8_t new_parent)
 	uint32_t trace_val;
 	uint32_t trace_id;
 	uint32_t n_minus_one;
-	uint32_t shift_bits;
 	uint32_t reg_bit;
 	bool ret = true;
 
@@ -86,9 +80,8 @@ static bool clk_mux_set_parent(struct clk *clkp, uint8_t new_parent)
 	} else {
 		v = readl(reg->reg);
 		n_minus_one = mux->n - 1U;
-		shift_bits = (uint32_t)ilog32(n_minus_one);
 		reg_bit = (uint32_t)reg->bit;
-		mask = (((1U << shift_bits) - 1U) << reg_bit);
+		mask = (MASK_COVER_FOR_NUMBER(n_minus_one) << reg_bit);
 		inverted_mask = ~mask;
 		v &= inverted_mask;
 		parent_val = (uint32_t)new_parent << reg_bit;

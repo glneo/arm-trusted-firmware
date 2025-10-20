@@ -4,5 +4,4 @@
 # SPDX-License-Identifier: BSD-3-Clause
 #
 
-BL31_SOURCES += ${PLAT_PATH}/common/drivers/pm/misc/ilog.c		\
-		${PLAT_PATH}/common/drivers/pm/misc/trace.c
+BL31_SOURCES += ${PLAT_PATH}/common/drivers/pm/misc/trace.c

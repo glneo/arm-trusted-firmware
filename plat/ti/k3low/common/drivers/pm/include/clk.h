@@ -14,6 +14,9 @@
 #include <lib/utils_def.h>
 #include <common/debug.h>
 
+/* Macro for generating 32bit mask that can cover all set bits in number */
+#define MASK_COVER_FOR_NUMBER(number) ((1UL << (32 - __builtin_clz(number))) - 1UL)
+
 #define FREQ_GHZ(freq)	((uint32_t) ((double) freq * 1000000000.0))
 #define FREQ_MHZ(freq)	((uint32_t) ((double) freq * 1000000.0))
 #define FREQ_KHZ(freq)	((uint32_t) ((double) freq * 1000.0))

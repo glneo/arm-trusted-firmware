@@ -7,7 +7,6 @@
 #include <clk_div.h>
 #include <clk_mux.h>
 #include <lib/container_of.h>
-#include <ilog.h>
 #include <lib/io.h>
 
 uint32_t clk_get_div(struct clk *clkp)
@@ -429,7 +428,7 @@ uint32_t clk_div_reg_get_div(struct clk *clkp)
 		}
 		v = readl(data_reg->reg) >> data_reg->bit;
 
-		v &= (uint32_t) (((1UL << (uint32_t)ilog32(n)) - 1UL));
+		v &= (uint32_t) MASK_COVER_FOR_NUMBER(n);
 		if (data_reg->start_at_1 == 0U) {
 			v += 1U;
 		}
@@ -465,7 +464,7 @@ bool clk_div_reg_set_div(struct clk *clkp, uint32_t d)
 		}
 
 		v = readl(data_reg->reg);
-		v &= ~(((1U << (uint32_t) ilog32(n)) - 1U) << data_reg->bit);
+		v &= ~(MASK_COVER_FOR_NUMBER(n) << data_reg->bit);
 		v |= d_val_p << data_reg->bit;
 		writel(v, (uint32_t) data_reg->reg);
 		ret = true; /* HARD CODED */
@@ -517,7 +516,7 @@ uint32_t clk_div_reg_go_get_div(struct clk *clkp)
 			n -= 1U;
 		}
 		v = readl(data_reg->reg) >> data_reg->bit;
-		v &= (uint32_t) (((1UL << (uint32_t)ilog32(n)) - 1UL));
+		v &= (uint32_t) MASK_COVER_FOR_NUMBER(n);
 		v += 1U;
 	}
 
@@ -551,7 +550,7 @@ bool clk_div_reg_go_set_div(struct clk *clkp, uint32_t d)
 		}
 
 		v = readl(data_reg->reg);
-		v &= (uint32_t) (~(((1UL << (uint32_t)ilog32(n)) - 1UL) << (data_reg->bit)));
+		v &= (uint32_t) (~(MASK_COVER_FOR_NUMBER(n) << (data_reg->bit)));
 		v &= (uint32_t) ~BIT(data_reg->go);
 		v |= d_val_p << data_reg->bit;
 		writel(v, data_reg->reg);
