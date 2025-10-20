@@ -2024,7 +2024,7 @@ clk_data_wiz16b8m4cdt3_main_0_ip1_ppi_TxByteClkHS_cl_clk = {
 	.clk_idx = AM62LX_DEV_DPHY_TX0_IP1_PPI_TXBYTECLKHS_CL_CLK,
 };
 
-const struct clk_data soc_clock_data[178] = {
+const struct clk_data soc_clock_data[] = {
 	[CLK_AM62LX_GLUELOGIC_HFOSC0_CLK] = {
 		.drv = &clk_drv_soc_hfosc0,
 		.flags = 0,

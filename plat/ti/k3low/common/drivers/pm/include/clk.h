@@ -10,7 +10,6 @@
 #include <types/errno.h>
 #include <stddef.h>
 #include <pm_types.h>
-#include <clock_limits.h>
 #include <lib/utils_def.h>
 #include <common/debug.h>
 
@@ -169,22 +168,23 @@ struct clk_data_reg {
 };
 
 /** The table of dynamic clock data */
-extern struct clk soc_clocks[SOC_CLOCKS_RANGE_ID_MAX];
+extern struct clk soc_clocks[];
+extern const size_t soc_clock_count;
 
 /** The table of const clock data */
-extern const struct clk_data soc_clock_data[SOC_CLOCK_DATA_RANGE_ID_MAX];
+extern const struct clk_data soc_clock_data[];
+extern const size_t soc_clock_data_count;
 
 /** The table of shared const clock ranges */
-extern const struct clk_range soc_clock_ranges[SOC_CLOCK_RANGES_ID_MAX];
+extern const struct clk_range soc_clock_ranges[];
+extern const size_t soc_clock_range_count;
 
 /** The table of default frequencies */
-extern const struct clk_default soc_clock_freq_defaults[SOC_CLOCK_FREQ_DEFAULTS_RANGE_ID_MAX];
+extern const struct clk_default soc_clock_freq_defaults[];
+extern const size_t soc_clock_freq_default_count;
 
 /** The table of dynamic stored clock frequencies (for freq_idx) */
-extern uint32_t soc_clock_values[SOC_CLOCK_VALUES_RANGE_ID_MAX];
-
-/** The total number of SoC clocks */
-extern const size_t soc_clock_count;
+extern uint32_t soc_clock_values[];
 
 uint32_t clk_value_set_freq(struct clk *clkp, uint32_t target_hz,
 			    uint32_t min_hz, uint32_t max_hz,

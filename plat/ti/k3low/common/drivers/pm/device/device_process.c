@@ -92,7 +92,7 @@ int32_t set_device_handler(struct tisci_msg_set_device_req *msg_recv)
 					if (i != (sizeof(enabled) * 8U)) {
 						uint8_t j;
 
-						for (j = 0U; j < soc_host_indexes_sz; j++) {
+						for (j = 0U; j < soc_host_indexes_count; j++) {
 							if (soc_host_indexes[j] == i) {
 								enabled_host_id = j;
 								break;

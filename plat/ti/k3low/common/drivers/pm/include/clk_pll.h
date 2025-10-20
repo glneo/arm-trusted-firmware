@@ -10,7 +10,6 @@
 #include <types/devgrps.h>
 #include <limits.h>
 #include <clk.h>
-#include <clock_limits.h>
 
 /*
  * Indexes into const PLL table entries are currently uint8_ts
@@ -54,7 +53,7 @@ struct pll_table_entry {
 };
 
 /** The SoC specific table of precomputed PLL settings */
-extern const struct pll_table_entry soc_pll_table[SOC_PLL_TABLE_RANGE_ID_MAX];
+extern const struct pll_table_entry soc_pll_table[];
 
 /** PLL specific const clock data. */
 struct clk_data_pll {

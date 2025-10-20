@@ -8,7 +8,6 @@
 #define DEVICE_H
 
 #include <cdefs.h>
-#include <device_limits.h>
 #include <hosts.h>
 #include <lib/container_of.h>
 #include <lib/utils_def.h>
@@ -157,18 +156,14 @@ struct devgroup {
 };
 
 /** The table of dynamic device data */
-extern struct device soc_devices[SOC_DEVICES_RANGE_ID_MAX];
-
-/** The table of const device data */
-extern const struct dev_data *const soc_device_data_arr[SOC_DEVICES_DATA_ARR_RANGE_ID_MAX];
-
-/** The total number of SoC devices */
+extern struct device soc_devices[];
 extern const size_t soc_device_count;
 
-/** The array of SoC device groups. */
-extern const struct devgroup soc_devgroups[PM_DEVGRP_RANGE_ID_MAX];
+/** The table of const device data */
+extern const struct dev_data *const soc_device_data_arr[];
 
-/** The number of SoC device groups. */
+/** The array of SoC device groups. */
+extern const struct devgroup soc_devgroups[];
 extern const size_t soc_devgroup_count;
 
 /**

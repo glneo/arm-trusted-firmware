@@ -9,7 +9,6 @@
 
 #include <device.h>
 #include <pm_types.h>
-#include <device_limits.h>
 
 #define PSC_DEV_NONE		7U
 #define PSC_DEV_MULTIPLE	6U
@@ -273,8 +272,7 @@ void psc_drop_pwr_up_ref(void);
 extern const struct drv psc_drv;
 
 struct soc_device_data;
-extern const struct soc_device_data *const
-soc_psc_multiple_domains[SOC_MULTIPLE_DOMAINS_RANGE_ID_MAX];
+extern const struct soc_device_data *const soc_psc_multiple_domains[];
 
 struct psc_data {
 	/** Linked list of PSC devices */
