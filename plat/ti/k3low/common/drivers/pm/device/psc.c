@@ -246,38 +246,38 @@ void psc_pd_get(struct device *dev, struct psc_pd *pd)
 		 (pd->use_count & TRACE_PM_VAL_MAX_PSC_DATA));
 
 	if ((pd->use_count++) != 0U) {
-		/* Nothing to do */
-	} else {
-		if ((psc->pd_data[idx].flags & PSC_PD_ALWAYSON) != 0U) {
-			/* Nothing to do */
-		} else {
-			/* Verify any previous transitions have completed */
-			psc_pd_wait(dev, pd);
-
-			if ((psc->pd_data[idx].flags & PSC_PD_DEPENDS) != 0U) {
-				psc_pd_get(dev, psc_idx2pd(psc,
-							   (pd_idx_t) psc->pd_data[idx].depends));
-			}
-
-			psc_pd_clk_get(&psc->pd_data[idx]);
-
-			pdctl = psc_read(dev, PSC_PDCTL(idx));
-
-			if ((pdctl & PDCTL_STATE_MASK) != PDCTL_STATE_ON) {
-				/* Avoid redundant power-up transitions */
-				pdctl &= ~PDCTL_STATE_MASK;
-				pdctl |= PDCTL_STATE_ON;
-
-				/* Note: This is a state machine reg */
-				psc_write(dev, pdctl, PSC_PDCTL(idx));
-
-				pd_initiate(dev, pd);
-				psc_pd_wait(dev, pd);
-			}
-
-			psc->data->pds_enabled |= (uint32_t) BIT(idx);
-		}
+		return;
 	}
+
+	if ((psc->pd_data[idx].flags & PSC_PD_ALWAYSON) != 0U) {
+		return;
+	}
+
+	/* Verify any previous transitions have completed */
+	psc_pd_wait(dev, pd);
+
+	if ((psc->pd_data[idx].flags & PSC_PD_DEPENDS) != 0U) {
+		psc_pd_get(dev, psc_idx2pd(psc,
+					   (pd_idx_t) psc->pd_data[idx].depends));
+	}
+
+	psc_pd_clk_get(&psc->pd_data[idx]);
+
+	pdctl = psc_read(dev, PSC_PDCTL(idx));
+
+	if ((pdctl & PDCTL_STATE_MASK) != PDCTL_STATE_ON) {
+		/* Avoid redundant power-up transitions */
+		pdctl &= ~PDCTL_STATE_MASK;
+		pdctl |= PDCTL_STATE_ON;
+
+		/* Note: This is a state machine reg */
+		psc_write(dev, pdctl, PSC_PDCTL(idx));
+
+		pd_initiate(dev, pd);
+		psc_pd_wait(dev, pd);
+	}
+
+	psc->data->pds_enabled |= (uint32_t) BIT(idx);
 }
 
 /**
@@ -316,37 +316,37 @@ void psc_pd_put(struct device *dev, struct psc_pd *pd)
 		 (pd->use_count & TRACE_PM_VAL_MAX_PSC_DATA));
 
 	if ((--pd->use_count) != 0U) {
-		/* Nothing to do */
-	} else {
-		if ((psc->pd_data[idx].flags & PSC_PD_ALWAYSON) != 0U) {
-			/* Nothing to do */
-		} else {
-			/* Verify any previous transitions have completed */
-			psc_pd_wait(dev, pd);
-
-			pdctl = psc_read(dev, PSC_PDCTL(idx));
-			if ((pdctl & PDCTL_STATE_MASK) != PDCTL_STATE_OFF) {
-				/* Avoid redundant power-up transitions */
-				pdctl &= ~PDCTL_STATE_MASK;
-				pdctl |= PDCTL_STATE_OFF;
-				/* Note: This is a state machine reg */
-				psc_write(dev, pdctl, PSC_PDCTL(idx));
-
-				pd_initiate(dev, pd);
-				psc_pd_wait(dev, pd);
-
-			}
-
-			psc_pd_clk_put(&psc->pd_data[idx]);
-
-			if ((psc->pd_data[idx].flags & PSC_PD_DEPENDS) != 0U) {
-				psc_pd_put(dev, psc_idx2pd(psc,
-							   (pd_idx_t) psc->pd_data[idx].depends));
-			}
-
-			psc->data->pds_enabled &= ~((uint32_t) BIT(idx));
-		}
+		return;
 	}
+
+	if ((psc->pd_data[idx].flags & PSC_PD_ALWAYSON) != 0U) {
+		return;
+	}
+
+	/* Verify any previous transitions have completed */
+	psc_pd_wait(dev, pd);
+
+	pdctl = psc_read(dev, PSC_PDCTL(idx));
+	if ((pdctl & PDCTL_STATE_MASK) != PDCTL_STATE_OFF) {
+		/* Avoid redundant power-up transitions */
+		pdctl &= ~PDCTL_STATE_MASK;
+		pdctl |= PDCTL_STATE_OFF;
+		/* Note: This is a state machine reg */
+		psc_write(dev, pdctl, PSC_PDCTL(idx));
+
+		pd_initiate(dev, pd);
+		psc_pd_wait(dev, pd);
+
+	}
+
+	psc_pd_clk_put(&psc->pd_data[idx]);
+
+	if ((psc->pd_data[idx].flags & PSC_PD_DEPENDS) != 0U) {
+		psc_pd_put(dev, psc_idx2pd(psc,
+					   (pd_idx_t) psc->pd_data[idx].depends));
+	}
+
+	psc->data->pds_enabled &= ~((uint32_t) BIT(idx));
 }
 
 uint32_t psc_pd_get_state(struct device *dev, struct psc_pd *pd)
@@ -682,20 +682,20 @@ void lpsc_module_set_reset_iso(struct device *dev, struct lpsc_module *module,
 	uint32_t mdctl;
 
 	if (0U == (data->flags & LPSC_HAS_RESET_ISO)) {
-		/* Nothing to do */
-	} else {
-		mdctl = psc_read(dev, PSC_MDCTL(idx));
-		is_enabled = (mdctl & MDCTL_RESET_ISO) != 0U;
+		return;
+	}
 
-		if (enable != is_enabled) {
-			if (enable) {
-				mdctl |= MDCTL_RESET_ISO;
-			} else {
-				mdctl &= ~MDCTL_RESET_ISO;
-			}
-			/* Note: This is a state machine reg */
-			psc_write(dev, mdctl, PSC_MDCTL(idx));
+	mdctl = psc_read(dev, PSC_MDCTL(idx));
+	is_enabled = (mdctl & MDCTL_RESET_ISO) != 0U;
+
+	if (enable != is_enabled) {
+		if (enable) {
+			mdctl |= MDCTL_RESET_ISO;
+		} else {
+			mdctl &= ~MDCTL_RESET_ISO;
 		}
+		/* Note: This is a state machine reg */
+		psc_write(dev, mdctl, PSC_MDCTL(idx));
 	}
 }
 
@@ -725,26 +725,26 @@ void lpsc_module_set_local_reset(struct device *dev, struct lpsc_module *module,
 	uint32_t mdctl;
 
 	if (0U == (data->flags & LPSC_HAS_LOCAL_RESET)) {
-		/* Nothing to do */
-	} else {
-		mdctl = psc_read(dev, (uint32_t) PSC_MDCTL(idx));
-		is_enabled = (mdctl & MDCTL_LRST) == 0U;
+		return;
+	}
 
-		if (enable != is_enabled) {
-			pm_trace(TRACE_PM_ACTION_SET_LOCAL_RESET,
-				 ((uint32_t) psc->psc_idx << TRACE_PM_VAL_PSC_SHIFT) |
-				 (idx << TRACE_PM_VAL_PD_SHIFT) |
-				 (uint32_t) ((enable == true) ? 1U : 0U));
+	mdctl = psc_read(dev, (uint32_t) PSC_MDCTL(idx));
+	is_enabled = (mdctl & MDCTL_LRST) == 0U;
 
-			if (enable) {
-				mdctl &= ~MDCTL_LRST;
-			} else {
-				mdctl |= MDCTL_LRST;
-			}
+	if (enable != is_enabled) {
+		pm_trace(TRACE_PM_ACTION_SET_LOCAL_RESET,
+			 ((uint32_t) psc->psc_idx << TRACE_PM_VAL_PSC_SHIFT) |
+			 (idx << TRACE_PM_VAL_PD_SHIFT) |
+			 (uint32_t) ((enable == true) ? 1U : 0U));
 
-			/* Note: This is a state machine reg */
-			psc_write(dev, mdctl, PSC_MDCTL(idx));
+		if (enable) {
+			mdctl &= ~MDCTL_LRST;
+		} else {
+			mdctl |= MDCTL_LRST;
 		}
+
+		/* Note: This is a state machine reg */
+		psc_write(dev, mdctl, PSC_MDCTL(idx));
 	}
 }
 

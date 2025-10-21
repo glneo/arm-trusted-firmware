@@ -176,32 +176,33 @@ void device_clk_set_ssc(struct device *dev, dev_clk_idx_t clk_idx, bool allow)
 	bool is_allowed;
 
 	if (!dev_clkp) {
-		/* Nothing to do */
+		return;
+	}
+
+	is_allowed = ((dev_clkp->flags & DEV_CLK_FLAG_ALLOW_SSC) != 0U);
+	if (is_allowed == allow) {
+		return;
+	}
+
+	dev_clkp->flags ^= DEV_CLK_FLAG_ALLOW_SSC;
+
+	if ((dev->flags & DEV_FLAG_ENABLED_MASK) == 0UL) {
+		return;
+	}
+
+	if ((dev_clkp->flags & DEV_CLK_FLAG_DISABLE) != 0U) {
+		return;
+	}
+
+	clkp = dev_get_clk(dev, clk_idx);
+	if (!clkp) {
+		return;
+	}
+
+	if (allow) {
+		clk_ssc_allow(clkp);
 	} else {
-		is_allowed = ((dev_clkp->flags & DEV_CLK_FLAG_ALLOW_SSC) != 0U);
-		if (is_allowed == allow) {
-			/* Nothing to do */
-		} else {
-			dev_clkp->flags ^= DEV_CLK_FLAG_ALLOW_SSC;
-
-			if ((dev->flags & DEV_FLAG_ENABLED_MASK) == 0UL) {
-				/* Nothing to do */
-			} else {
-				if ((dev_clkp->flags & DEV_CLK_FLAG_DISABLE) != 0U) {
-					/* Nothing to do */
-				} else {
-					clkp = dev_get_clk(dev, clk_idx);
-
-					if (!clkp) {
-						/* fail */
-					} else if (allow) {
-						clk_ssc_allow(clkp);
-					} else {
-						clk_ssc_block(clkp);
-					}
-				}
-			}
-		}
+		clk_ssc_block(clkp);
 	}
 }
 
@@ -226,32 +227,33 @@ void device_clk_set_freq_change(struct device *dev, dev_clk_idx_t clk_idx,
 	bool is_allowed;
 
 	if (!dev_clkp) {
-		/* Nothing to do */
+		return;
+	}
+
+	is_allowed = ((dev_clkp->flags & DEV_CLK_FLAG_ALLOW_FREQ_CHANGE) != 0U);
+	if (is_allowed == allow) {
+		return;
+	}
+
+	dev_clkp->flags ^= DEV_CLK_FLAG_ALLOW_FREQ_CHANGE;
+
+	if ((dev->flags & DEV_FLAG_ENABLED_MASK) == 0UL) {
+		return;
+	}
+
+	if ((dev_clkp->flags & DEV_CLK_FLAG_DISABLE) != 0U) {
+		return;
+	}
+
+	clkp = dev_get_clk(dev, clk_idx);
+	if (!clkp) {
+		return;
+	}
+
+	if (allow) {
+		clk_freq_change_allow(clkp);
 	} else {
-		is_allowed = ((dev_clkp->flags & DEV_CLK_FLAG_ALLOW_FREQ_CHANGE) != 0U);
-		if (is_allowed == allow) {
-			/* Nothing to do */
-		} else {
-			dev_clkp->flags ^= DEV_CLK_FLAG_ALLOW_FREQ_CHANGE;
-
-			if ((dev->flags & DEV_FLAG_ENABLED_MASK) == 0UL) {
-				/* Nothing to do*/
-			} else {
-				if ((dev_clkp->flags & DEV_CLK_FLAG_DISABLE) != 0U) {
-					/* Nothing to do */
-				} else {
-					clkp = dev_get_clk(dev, clk_idx);
-
-					if (!clkp) {
-						/* fail */
-					} else if (allow) {
-						clk_freq_change_allow(clkp);
-					} else {
-						clk_freq_change_block(clkp);
-					}
-				}
-			}
-		}
+		clk_freq_change_block(clkp);
 	}
 }
 
